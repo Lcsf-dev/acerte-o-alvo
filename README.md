@@ -21,6 +21,8 @@ Também é possível jogar usando **Tab**, **Enter** e **Espaço**. O jogo respe
 - `game.js`: criação dos alvos, pontuação, controle do tempo e reinício.
 - `tests/game.test.cjs`: testes da lógica com relógio e DOM simulados.
 
+No JavaScript, as configurações, o estado da partida e os temporizadores ficam agrupados separadamente. As funções de interface cuidam da apresentação, enquanto as funções de controle gerenciam os alvos e o ciclo da partida. O código fica em um escopo próprio para evitar variáveis globais, e a pontuação é calculada a partir dos acertos.
+
 O cronômetro usa `performance.now()` para calcular o tempo restante a partir de um prazo fixo, evitando acumular atrasos dos temporizadores. Os temporizadores são cancelados no encerramento, e cliques após o prazo não pontuam.
 
 ## 🧪 Testes

@@ -28,11 +28,23 @@
     <div class="layout-jogo">
       <section class="painel-jogo" aria-label="Minigame Acerte o Alvo">
         <div class="placar">
-          <div class="metrica"><span class="rotulo">PONTUAÇÃO</span><p><span id="pontuacao">0</span><span class="unidade">pts</span></p></div>
-          <div class="metrica metrica-tempo"><span class="rotulo">TEMPO RESTANTE</span><p id="relogio"><span id="tempo">20</span><span class="unidade">s</span></p></div>
-          <div class="metrica"><span class="rotulo">ACERTOS</span><p id="acertos">0</p></div>
+          <div class="metrica">
+            <span class="rotulo">PONTUAÇÃO</span>
+            <p><span id="pontuacao">0</span><span class="unidade">pts</span></p>
+          </div>
+          <div class="metrica metrica-tempo">
+            <span class="rotulo">TEMPO RESTANTE</span>
+            <p id="relogio"><span id="tempo">20</span><span class="unidade">s</span></p>
+          </div>
+          <div class="metrica">
+            <span class="rotulo">ACERTOS</span>
+            <p id="acertos">0</p>
+          </div>
         </div>
-        <div class="trilho-tempo" aria-hidden="true"><div id="barra-tempo"></div></div>
+
+        <div class="trilho-tempo" aria-hidden="true">
+          <div id="barra-tempo"></div>
+        </div>
 
         <div id="area-jogo" class="area-jogo" aria-label="Área em que os alvos aparecem">
           <div id="tela-mensagem" class="tela-mensagem">
@@ -40,12 +52,21 @@
             <p class="etiqueta-tela" id="etiqueta-tela">PREPARE SUA MIRA</p>
             <h2 id="titulo-mensagem">Pronto para o desafio?</h2>
             <p id="descricao-mensagem">Clique nos alvos antes que eles mudem de lugar.</p>
-            <button id="botao-iniciar" class="botao-iniciar" type="button">Iniciar partida <span aria-hidden="true">↗</span></button>
+            <button id="botao-iniciar" class="botao-iniciar" type="button">
+              <span id="texto-botao">Iniciar partida</span>
+              <span class="icone-botao" aria-hidden="true">↗</span>
+            </button>
             <span class="dica-inicio" id="dica-inicio">20 segundos. Cada acerto conta.</span>
           </div>
         </div>
 
-        <div class="rodape-jogo"><span id="estado-jogo"><span class="indicador" aria-hidden="true"></span> Aguardando início</span><span>FOCO + VELOCIDADE</span></div>
+        <div class="rodape-jogo">
+          <span id="estado-jogo">
+            <span class="indicador" aria-hidden="true"></span>
+            <span id="texto-estado">Aguardando início</span>
+          </span>
+          <span>FOCO + VELOCIDADE</span>
+        </div>
         <p id="anuncio" class="somente-leitor" role="status" aria-live="polite" aria-atomic="true"></p>
       </section>
 
@@ -53,16 +74,41 @@
         <span class="numero-desafio">/ 05</span>
         <h2 id="titulo-instrucoes">Simples de jogar.<br>Difícil de parar.</h2>
         <ol class="passos">
-          <li><span class="numero-passo">01</span><div><h3>Inicie a partida</h3><p>Respire fundo e prepare-se.<br>O tempo começa ao clicar.</p></div></li>
-          <li><span class="numero-passo">02</span><div><h3>Encontre o alvo</h3><p>Ele aparece em um lugar diferente a cada rodada.</p></div></li>
-          <li><span class="numero-passo">03</span><div><h3>Clique e pontue</h3><p>Ganhe <strong>10 pontos</strong> por acerto.<br>Seja rápido: ele muda em 1,2 s!</p></div></li>
+          <li>
+            <span class="numero-passo">01</span>
+            <div>
+              <h3>Inicie a partida</h3>
+              <p>Respire fundo e prepare-se.<br>O tempo começa ao clicar.</p>
+            </div>
+          </li>
+          <li>
+            <span class="numero-passo">02</span>
+            <div>
+              <h3>Encontre o alvo</h3>
+              <p>Ele aparece em um lugar diferente a cada rodada.</p>
+            </div>
+          </li>
+          <li>
+            <span class="numero-passo">03</span>
+            <div>
+              <h3>Clique e pontue</h3>
+              <p>Ganhe <strong>10 pontos</strong> por acerto.<br>Seja rápido: ele muda em 1,2 s!</p>
+            </div>
+          </li>
         </ol>
-        <div class="cartao-dica"><span aria-hidden="true">✦</span><p><strong>O segredo é manter o foco.</strong><br>Olhos na área, dedo preparado.</p></div>
+
+        <div class="cartao-dica">
+          <span aria-hidden="true">✦</span>
+          <p><strong>O segredo é manter o foco.</strong><br>Olhos na área, dedo preparado.</p>
+        </div>
         <p class="dica-teclado">Também funciona com teclado: use Tab para selecionar e Enter ou Espaço para acertar.</p>
       </aside>
     </div>
 
-    <footer class="rodape-pagina"><span>FEITO PARA TREINAR. CRIADO PARA DESAFIAR.</span><span>HTML <i>·</i> CSS <i>·</i> JAVASCRIPT</span></footer>
+    <footer class="rodape-pagina">
+      <span>FEITO PARA TREINAR. CRIADO PARA DESAFIAR.</span>
+      <span>HTML <i>·</i> CSS <i>·</i> JAVASCRIPT</span>
+    </footer>
   </main>
 </body>
 </html>

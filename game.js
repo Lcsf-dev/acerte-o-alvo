@@ -1,133 +1,215 @@
-const DURACAO_PARTIDA = 20_000;
-const INTERVALO_ALVO = 1_200;
-const PONTOS_POR_ACERTO = 10;
+(() => {
+  'use strict';
 
-const areaJogo = document.querySelector('#area-jogo');
-const painelJogo = document.querySelector('.painel-jogo');
-const telaMensagem = document.querySelector('#tela-mensagem');
-const botaoIniciar = document.querySelector('#botao-iniciar');
-const textoPontuacao = document.querySelector('#pontuacao');
-const textoAcertos = document.querySelector('#acertos');
-const textoTempo = document.querySelector('#tempo');
-const relogio = document.querySelector('#relogio');
-const barraTempo = document.querySelector('#barra-tempo');
-const estadoJogo = document.querySelector('#estado-jogo');
-const anuncio = document.querySelector('#anuncio');
+  const CONFIGURACAO = Object.freeze({
+    duracaoPartidaMs: 20_000,
+    intervaloAlvoMs: 1_200,
+    pontosPorAcerto: 10,
+    atualizacaoRelogioMs: 100,
+    avisoTempoMs: 5_000,
+  });
 
-let partidaAtiva = false;
-let pontuacao = 0;
-let acertos = 0;
-let prazoFinal = 0;
-let alvoAtual = null;
-let temporizadorAlvo = null;
-let temporizadorRelogio = null;
-let temporizadorFim = null;
+  const elementos = {
+    areaJogo: document.querySelector('#area-jogo'),
+    painelJogo: document.querySelector('.painel-jogo'),
+    telaMensagem: document.querySelector('#tela-mensagem'),
+    botaoIniciar: document.querySelector('#botao-iniciar'),
+    textoBotao: document.querySelector('#texto-botao'),
+    pontuacao: document.querySelector('#pontuacao'),
+    acertos: document.querySelector('#acertos'),
+    tempo: document.querySelector('#tempo'),
+    relogio: document.querySelector('#relogio'),
+    barraTempo: document.querySelector('#barra-tempo'),
+    textoEstado: document.querySelector('#texto-estado'),
+    anuncio: document.querySelector('#anuncio'),
+    etiquetaTela: document.querySelector('#etiqueta-tela'),
+    tituloMensagem: document.querySelector('#titulo-mensagem'),
+    descricaoMensagem: document.querySelector('#descricao-mensagem'),
+    dicaInicio: document.querySelector('#dica-inicio'),
+  };
 
-function limparTemporizadores() {
-  clearTimeout(temporizadorAlvo);
-  clearInterval(temporizadorRelogio);
-  clearTimeout(temporizadorFim);
-}
+  const partida = {
+    ativa: false,
+    acertos: 0,
+    prazoFinal: 0,
+    alvo: null,
+  };
 
-function posicionarAlvo() {
-  if (!alvoAtual) return;
+  const temporizadores = {
+    alvo: null,
+    relogio: null,
+    encerramento: null,
+  };
 
-  // Descontar o tamanho do alvo evita que ele ultrapasse as bordas.
-  const limiteHorizontal = Math.max(0, areaJogo.clientWidth - alvoAtual.offsetWidth);
-  const limiteVertical = Math.max(0, areaJogo.clientHeight - alvoAtual.offsetHeight);
-  alvoAtual.style.left = `${Math.random() * limiteHorizontal}px`;
-  alvoAtual.style.top = `${Math.random() * limiteVertical}px`;
-}
-
-function criarAlvo() {
-  clearTimeout(temporizadorAlvo);
-  if (!partidaAtiva) return;
-  if (performance.now() >= prazoFinal) {
-    encerrarPartida();
-    return;
+  function obterPontuacao() {
+    // A pontuação é derivada dos acertos para manter uma única fonte de verdade.
+    return partida.acertos * CONFIGURACAO.pontosPorAcerto;
   }
 
-  const manterFoco = alvoAtual !== null && document.activeElement === alvoAtual;
-  alvoAtual?.remove();
-  alvoAtual = document.createElement('button');
-  alvoAtual.type = 'button';
-  alvoAtual.className = 'alvo';
-  alvoAtual.setAttribute('aria-label', 'Acertar alvo: mais 10 pontos');
-  alvoAtual.addEventListener('click', registrarAcerto);
-  areaJogo.append(alvoAtual);
-  posicionarAlvo();
-  if (manterFoco) alvoAtual.focus({ preventScroll: true });
-
-  // Cada novo alvo recebe seu próprio prazo de 1,2 segundo.
-  temporizadorAlvo = setTimeout(criarAlvo, INTERVALO_ALVO);
-}
-
-function registrarAcerto(evento) {
-  if (!partidaAtiva || evento.currentTarget !== alvoAtual) return;
-  if (performance.now() >= prazoFinal) {
-    encerrarPartida();
-    return;
+  function obterTempoRestante() {
+    // O prazo fixo evita acumular atrasos entre execuções dos temporizadores.
+    return Math.max(0, partida.prazoFinal - performance.now());
   }
 
-  acertos += 1;
-  pontuacao += PONTOS_POR_ACERTO;
-  textoPontuacao.textContent = pontuacao;
-  textoAcertos.textContent = acertos;
-  criarAlvo();
-}
+  function limparTemporizadores() {
+    clearTimeout(temporizadores.alvo);
+    clearInterval(temporizadores.relogio);
+    clearTimeout(temporizadores.encerramento);
 
-function atualizarRelogio() {
-  // O relógio real evita acumular atrasos entre execuções do temporizador.
-  const tempoRestante = Math.max(0, prazoFinal - performance.now());
-  textoTempo.textContent = Math.ceil(tempoRestante / 1_000);
-  barraTempo.style.width = `${(tempoRestante / DURACAO_PARTIDA) * 100}%`;
-  relogio.classList.toggle('tempo-urgente', tempoRestante <= 5_000);
-  if (tempoRestante === 0) encerrarPartida();
-}
+    temporizadores.alvo = null;
+    temporizadores.relogio = null;
+    temporizadores.encerramento = null;
+  }
 
-function iniciarPartida(evento) {
-  if (partidaAtiva) return;
-  limparTemporizadores();
-  pontuacao = 0;
-  acertos = 0;
-  partidaAtiva = true;
-  prazoFinal = performance.now() + DURACAO_PARTIDA;
-  textoPontuacao.textContent = '0';
-  textoAcertos.textContent = '0';
-  telaMensagem.hidden = true;
-  painelJogo.classList.add('em-andamento');
-  estadoJogo.lastChild.textContent = ' Partida em andamento';
-  anuncio.textContent = 'Partida iniciada. Você tem 20 segundos.';
-  atualizarRelogio();
-  criarAlvo();
-  if (evento.detail === 0) alvoAtual.focus({ preventScroll: true });
-  temporizadorRelogio = setInterval(atualizarRelogio, 100);
-  temporizadorFim = setTimeout(encerrarPartida, DURACAO_PARTIDA);
-}
+  // Atualização da interface.
+  function atualizarPlacar() {
+    elementos.pontuacao.textContent = obterPontuacao();
+    elementos.acertos.textContent = partida.acertos;
+  }
 
-function encerrarPartida() {
-  if (!partidaAtiva) return;
-  partidaAtiva = false;
-  limparTemporizadores();
-  alvoAtual?.remove();
-  alvoAtual = null;
-  textoTempo.textContent = '0';
-  barraTempo.style.width = '0%';
-  painelJogo.classList.remove('em-andamento');
-  estadoJogo.lastChild.textContent = ' Partida encerrada';
-  document.querySelector('#etiqueta-tela').textContent = 'TEMPO ESGOTADO';
-  document.querySelector('#titulo-mensagem').textContent = `${pontuacao} pontos!`;
-  document.querySelector('#descricao-mensagem').textContent = `Você acertou ${acertos} ${acertos === 1 ? 'alvo' : 'alvos'} em 20 segundos. Vamos tentar de novo?`;
-  botaoIniciar.firstChild.textContent = 'Jogar novamente ';
-  document.querySelector('#dica-inicio').textContent = 'Uma nova partida, uma nova chance de se superar.';
-  telaMensagem.hidden = false;
-  anuncio.textContent = `Partida encerrada. Pontuação final: ${pontuacao} pontos, ${acertos} ${acertos === 1 ? 'acerto' : 'acertos'}.`;
-  botaoIniciar.focus({ preventScroll: true });
-}
+  function exibirTempo(tempoRestante) {
+    const percentualRestante = (tempoRestante / CONFIGURACAO.duracaoPartidaMs) * 100;
 
-botaoIniciar.addEventListener('click', iniciarPartida);
+    elementos.tempo.textContent = Math.ceil(tempoRestante / 1_000);
+    elementos.barraTempo.style.width = `${percentualRestante}%`;
+    elementos.relogio.classList.toggle(
+      'tempo-urgente',
+      tempoRestante <= CONFIGURACAO.avisoTempoMs,
+    );
+  }
 
-// Reposiciona o alvo se a tela for redimensionada durante a partida.
-window.addEventListener('resize', () => {
-  if (partidaAtiva) posicionarAlvo();
-});
+  function exibirPartida() {
+    elementos.telaMensagem.hidden = true;
+    elementos.painelJogo.classList.add('em-andamento');
+    elementos.textoEstado.textContent = 'Partida em andamento';
+    elementos.anuncio.textContent = 'Partida iniciada. Você tem 20 segundos.';
+
+    atualizarPlacar();
+    exibirTempo(CONFIGURACAO.duracaoPartidaMs);
+  }
+
+  function exibirResultado() {
+    const pontuacao = obterPontuacao();
+    const nomeAlvos = partida.acertos === 1 ? 'alvo' : 'alvos';
+    const nomeAcertos = partida.acertos === 1 ? 'acerto' : 'acertos';
+
+    elementos.painelJogo.classList.remove('em-andamento');
+    elementos.textoEstado.textContent = 'Partida encerrada';
+    elementos.etiquetaTela.textContent = 'TEMPO ESGOTADO';
+    elementos.tituloMensagem.textContent = `${pontuacao} pontos!`;
+    elementos.descricaoMensagem.textContent =
+      `Você acertou ${partida.acertos} ${nomeAlvos} em 20 segundos. Vamos tentar de novo?`;
+    elementos.textoBotao.textContent = 'Jogar novamente';
+    elementos.dicaInicio.textContent = 'Uma nova partida, uma nova chance de se superar.';
+    elementos.anuncio.textContent =
+      `Partida encerrada. Pontuação final: ${pontuacao} pontos, ${partida.acertos} ${nomeAcertos}.`;
+    elementos.telaMensagem.hidden = false;
+
+    exibirTempo(0);
+    elementos.botaoIniciar.focus({ preventScroll: true });
+  }
+
+  // Criação, posicionamento e interação dos alvos.
+  function removerAlvo() {
+    partida.alvo?.remove();
+    partida.alvo = null;
+  }
+
+  function posicionarAlvo() {
+    if (!partida.alvo) return;
+
+    // Descontar o tamanho do alvo mantém toda a sua área dentro das bordas.
+    const limiteHorizontal = Math.max(0, elementos.areaJogo.clientWidth - partida.alvo.offsetWidth);
+    const limiteVertical = Math.max(0, elementos.areaJogo.clientHeight - partida.alvo.offsetHeight);
+
+    partida.alvo.style.left = `${Math.random() * limiteHorizontal}px`;
+    partida.alvo.style.top = `${Math.random() * limiteVertical}px`;
+  }
+
+  function partidaPermiteInteracao() {
+    if (!partida.ativa) return false;
+    if (obterTempoRestante() > 0) return true;
+
+    encerrarPartida();
+    return false;
+  }
+
+  function criarAlvo() {
+    clearTimeout(temporizadores.alvo);
+    if (!partidaPermiteInteracao()) return;
+
+    const manterFoco = partida.alvo !== null && document.activeElement === partida.alvo;
+    const alvo = document.createElement('button');
+
+    alvo.type = 'button';
+    alvo.className = 'alvo';
+    alvo.setAttribute('aria-label', `Acertar alvo: mais ${CONFIGURACAO.pontosPorAcerto} pontos`);
+    alvo.addEventListener('click', registrarAcerto);
+
+    removerAlvo();
+    partida.alvo = alvo;
+    elementos.areaJogo.append(alvo);
+    posicionarAlvo();
+
+    if (manterFoco) {
+      alvo.focus({ preventScroll: true });
+    }
+
+    // Cada novo alvo recebe seu próprio prazo, inclusive após um acerto.
+    temporizadores.alvo = setTimeout(criarAlvo, CONFIGURACAO.intervaloAlvoMs);
+  }
+
+  function registrarAcerto(evento) {
+    if (evento.currentTarget !== partida.alvo || !partidaPermiteInteracao()) return;
+
+    partida.acertos += 1;
+    atualizarPlacar();
+    criarAlvo();
+  }
+
+  // Ciclo de vida da partida.
+  function atualizarRelogio() {
+    if (!partida.ativa) return;
+
+    const tempoRestante = obterTempoRestante();
+    exibirTempo(tempoRestante);
+
+    if (tempoRestante === 0) {
+      encerrarPartida();
+    }
+  }
+
+  function iniciarPartida(evento) {
+    if (partida.ativa) return;
+
+    limparTemporizadores();
+    partida.acertos = 0;
+    partida.ativa = true;
+    partida.prazoFinal = performance.now() + CONFIGURACAO.duracaoPartidaMs;
+
+    exibirPartida();
+    criarAlvo();
+
+    if (evento.detail === 0) {
+      partida.alvo.focus({ preventScroll: true });
+    }
+
+    temporizadores.relogio = setInterval(atualizarRelogio, CONFIGURACAO.atualizacaoRelogioMs);
+    temporizadores.encerramento = setTimeout(encerrarPartida, obterTempoRestante());
+  }
+
+  function encerrarPartida() {
+    if (!partida.ativa) return;
+
+    partida.ativa = false;
+    limparTemporizadores();
+    removerAlvo();
+    exibirResultado();
+  }
+
+  elementos.botaoIniciar.addEventListener('click', iniciarPartida);
+
+  window.addEventListener('resize', () => {
+    if (partida.ativa) posicionarAlvo();
+  });
+})();
